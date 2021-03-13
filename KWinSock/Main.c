@@ -1,8 +1,158 @@
 #include "WskSocket.h"
+#include "HTTP_Parser/http_parser.h"
 #include <minwindef.h>
 #include <string.h>
 
 #define DebuggerPrint(...) DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, __VA_ARGS__);
+#define KWS_MEM_TAG ' SWK'
+
+//#define FILE_PATH L"\\??\\C:\\mitusha.jpg"
+//
+//#define HOST_PATH "p.pstatp.com"
+//#define LHOST_PATH L"p.pstatp.com"
+
+#define FILE_PATH L"\\??\\C:\\sysdiag-full-5.0.58.2-20210313.exe"
+
+#define HOST_ROOT "down5.huorong.cn"
+#define LHOST_ROOT L"down5.huorong.cn"
+
+#define HOST_FILE_PATH "/sysdiag-full-5.0.58.2-20210313.exe"
+
+//int
+//onURL(
+//	http_parser* _,
+//	const char* at,
+//	size_t length
+//)
+//{
+//	DebuggerPrint("%s\n", at);
+//	return 0;
+//}
+
+typedef struct _USER_DATA
+{
+	HANDLE hFile;
+}USER_DATA, * PUSER_DATA;
+
+char* LastData = NULL;
+size_t LastLength = 0;
+
+int
+onChunkHeader(
+	http_parser* pparser
+)
+{
+	DebuggerPrint("[KS] %S Chunk length:%I64u\n", __FUNCTIONW__, pparser->content_length);
+
+	return 0;
+}
+
+int
+onChunkComplete(
+	http_parser* _
+)
+{
+	DebuggerPrint("[KS] %S\n", __FUNCTIONW__);
+
+	return 0;
+}
+
+int
+onStatus(
+	http_parser* _,
+	const char* at,
+	size_t length
+)
+{
+	DebuggerPrint("[KS] %S:%.*s\n", __FUNCTIONW__, (ULONG)length, at);
+
+	return 0;
+}
+
+int
+onHeaderField(
+	http_parser* _,
+	const char* at,
+	size_t length
+)
+{
+	//DebuggerPrint("[KS] %S:%.*s\n", __FUNCTIONW__, (ULONG)length, at);
+
+	LastData = ExAllocatePoolWithTag(PagedPool, length, KWS_MEM_TAG);
+	if (LastData)
+	{
+		RtlCopyMemory(LastData, at, length);
+		LastLength = length;
+	}
+
+	return 0;
+}
+
+int
+onHeaderValue(
+	http_parser* _,
+	const char* at,
+	size_t length
+)
+{
+	if (LastLength != 0 && LastData)
+	{
+		DebuggerPrint("[KS] %S:%.*s:%.*s\n", __FUNCTIONW__, (ULONG)LastLength, LastData, (ULONG)length, at);
+		ExFreePoolWithTag(LastData, KWS_MEM_TAG);
+	}
+
+	LastData = NULL;
+	LastLength = 0;
+
+	return 0;
+}
+
+int
+onBody(
+	http_parser* pparser,
+	const char* at,
+	size_t length
+)
+{
+	//DebuggerPrint("[KS] %S:%.*s\n", __FUNCTIONW__, (ULONG)length, at);
+
+	IO_STATUS_BLOCK IoStatus = { 0 };
+	NTSTATUS ntStatus = ZwWriteFile(((PUSER_DATA)pparser->data)->hFile, NULL, NULL, NULL, &IoStatus, (PVOID)at, length, NULL, NULL);
+	if (!NT_SUCCESS(ntStatus))
+		;
+
+	return 0;
+}
+
+int
+onMessageBegin(
+	http_parser* _
+)
+{
+	DebuggerPrint("[KS] %S\n", __FUNCTIONW__);
+
+	return 0;
+}
+
+int
+onMessageComplete(
+	http_parser* _
+)
+{
+	DebuggerPrint("[KS] %S\n", __FUNCTIONW__);
+
+	return 0;
+}
+
+int
+onHeadersComplete(
+	http_parser* _
+)
+{
+	DebuggerPrint("[KS] %S\n", __FUNCTIONW__);
+
+	return 0;
+}
 
 NTSTATUS
 NTAPI
@@ -29,12 +179,11 @@ DriverEntry(
 
 	//
 	// Client.
-	// Perform HTTP request to http://httpbin.org/uuid
 	//
 
 	{
 		HANDLE hFile = NULL;
-		UNICODE_STRING FileName = RTL_CONSTANT_STRING(L"\\??\\C:\\mitusha.jpg");
+		UNICODE_STRING FileName = RTL_CONSTANT_STRING(FILE_PATH);
 		OBJECT_ATTRIBUTES ObjectAttributes = RTL_CONSTANT_OBJECT_ATTRIBUTES(&FileName, OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE);
 		IO_STATUS_BLOCK IoStatus = { 0 };
 		// 以OPEN_IF方式打开文件。
@@ -55,12 +204,12 @@ DriverEntry(
 
 		if (NT_SUCCESS(ntStatus))
 		{
-			BYTE SendBuffer[] = "GET /origin/137250002a438b83aa538 HTTP/1.1\r\n"
+			BYTE SendBuffer[] = "GET "HOST_FILE_PATH" HTTP/1.1\r\n"
 				"Connection:Close\r\n"
 				"Accept-Encoding:\r\n"
 				"Accept-Charset:utf-8\r\n"
 				"Accept-Language:zh-CN,en,*\r\n"
-				"host:p.pstatp.com\r\n"
+				"host:"HOST_ROOT"\r\n"
 				"User-Agent:Mozilla/5.0\r\n\r\n";
 
 			BYTE RecvBuffer[1025] = { 0 };
@@ -72,18 +221,37 @@ DriverEntry(
 			Hints.ai_flags |= AI_CANONNAME;
 			Hints.ai_family = AF_UNSPEC;
 			Hints.ai_socktype = SOCK_STREAM;
-			UNICODE_STRING NodeName = RTL_CONSTANT_STRING(L"p.pstatp.com");
+			UNICODE_STRING NodeName = RTL_CONSTANT_STRING(LHOST_ROOT);
 			UNICODE_STRING Port = RTL_CONSTANT_STRING(L"80");
 			PADDRINFOEXW Result = { 0 };
 			ntStatus = KsGetAddrInfo(&NodeName, &Port, &Hints, &Result);
 			if (NT_SUCCESS(ntStatus))
 			{
-				DebuggerPrint("%S\n", Result->ai_canonname);
+				//DebuggerPrint("%S\n", Result->ai_canonname);
 
 				PKSOCKET Socket = NULL;
 				ntStatus = KsCreateConnectionSocket(&Socket, AF_INET, SOCK_STREAM, IPPROTO_TCP);
 				if (NT_SUCCESS(ntStatus))
 				{
+					http_parser_settings settings = { 0 };
+					settings.on_message_begin = onMessageBegin;
+					settings.on_message_complete = onMessageComplete;
+					settings.on_status = onStatus;
+					settings.on_body = onBody;
+					settings.on_chunk_complete = onChunkComplete;
+					settings.on_chunk_header = onChunkHeader;
+					settings.on_headers_complete = onHeadersComplete;
+					settings.on_header_field = onHeaderField;
+					settings.on_header_value = onHeaderValue;
+					/* ... */
+
+					USER_DATA UserData = { 0 };
+					UserData.hFile = hFile;
+
+					http_parser parser = { 0 };
+					http_parser_init(&parser, HTTP_RESPONSE);
+					parser.data = &UserData;
+
 					ntStatus = KsConnect(Socket, Result->ai_addr);
 					if (NT_SUCCESS(ntStatus))
 					{
@@ -92,17 +260,25 @@ DriverEntry(
 						DebuggerPrint("[KS] Send:%u\n", Length);
 						if (NT_SUCCESS(ntStatus))
 						{
-							BOOLEAN FoundHeader = FALSE;
-							do
+							/*BOOLEAN FoundHeader = FALSE;*/
+
+							while (TRUE)
 							{
 								Length = 0;
 								ntStatus = KsRecv(Socket, RecvBuffer, sizeof(RecvBuffer) - sizeof(RecvBuffer[0]), 0, &Length);
+								if (!NT_SUCCESS(ntStatus) || !Length)
+									break;
+
+								if (http_parser_execute(&parser, &settings, RecvBuffer, Length) != Length)
+								{
+									ntStatus = STATUS_UNSUCCESSFUL;
+									break;
+								}
 
 								RecvBuffer[(sizeof(RecvBuffer) - sizeof(RecvBuffer[0])) / sizeof(RecvBuffer[0])] = 0;
 								RecvBuffer[Length] = 0;
-								//DebuggerPrint("[KS] Recv:%u\n", Length);
 
-								PCHAR Ret = NULL;
+								/*PCHAR Ret = NULL;
 								if (!FoundHeader)
 								{
 									Ret = strstr(RecvBuffer, "\r\n\r\n");
@@ -116,17 +292,13 @@ DriverEntry(
 								if (!Ret)
 									Ret = RecvBuffer;
 
-								/*DebuggerPrint("%s", Ret);*/
-								//DebuggerPrint("%d : %s\n", Length - (ULONG)(Ret - RecvBuffer), NT_SUCCESS(ntStatus) ? "Suc" : "Fail");
-
 								if (FoundHeader)
-									/*ntStatus =*/ ZwWriteFile(hFile, NULL, NULL, NULL, &IoStatus, Ret, Length - (ULONG)(Ret - RecvBuffer), NULL, NULL);
-
-								//DebuggerPrint("%s", RecvBuffer);
-								//DebuggerPrint("%d\n", (INT)RecvBuffer[(sizeof(RecvBuffer) - sizeof(RecvBuffer[0])) / sizeof(RecvBuffer[0])]);
-							} while (/*(Length == sizeof(RecvBuffer) - sizeof(RecvBuffer[0])) &&*/Length && NT_SUCCESS(ntStatus));
-
-							//DbgBreakPoint();
+								{
+									ntStatus = ZwWriteFile(hFile, NULL, NULL, NULL, &IoStatus, Ret, Length - (ULONG)(Ret - RecvBuffer), NULL, NULL);
+									if (!NT_SUCCESS(ntStatus))
+										break;
+								}*/
+							}
 						}
 					}
 
@@ -139,8 +311,6 @@ DriverEntry(
 			ZwClose(hFile);
 		}
 	}
-
-	//DbgBreakPoint();
 
 	//
 	// TCP server.

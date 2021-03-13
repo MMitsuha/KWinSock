@@ -13,6 +13,9 @@
       <UniqueIdentifier>{8E41214B-6785-4CFE-B992-037D68949A14}</UniqueIdentifier>
       <Extensions>inf;inv;inx;mof;mc;</Extensions>
     </Filter>
+    <Filter Include="HTTP_Praser">
+      <UniqueIdentifier>{812f77f5-929b-4207-8ea5-cce015be0e35}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.c">
@@ -21,10 +24,16 @@
     <ClCompile Include="WskSocket.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="HTTP_Parser\http_parser.c">
+      <Filter>HTTP_Praser</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="WskSocket.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="HTTP_Parser\http_parser.h">
+      <Filter>HTTP_Praser</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
