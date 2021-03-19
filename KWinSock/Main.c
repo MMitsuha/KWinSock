@@ -371,7 +371,7 @@ DriverEntry(
 						MD5Final(&Context, MD5Value);
 
 						for (BYTE i = 0; i < MD5_SIZE; i++)
-							RtlStringCbPrintfA(&MD5Str[i * 2], 2 + 1, "%02x", MD5Value[i]);
+							RtlStringCbPrintfA(&MD5Str[i * 2], 2 + 1, "%02X", MD5Value[i]);
 
 						DebuggerPrint("%s\n", MD5Str);
 					}
