@@ -158,3 +158,43 @@ KsRecvFrom(
 	_In_ ULONG Flags,
 	_In_ PSOCKADDR RemoteAddress
 );
+
+static
+inline
+UINT32
+htonl(
+	_In_ UINT32 hostlong
+)
+{
+	return RtlUlongByteSwap(hostlong);
+}
+
+static
+inline
+UINT16
+htons(
+	_In_ UINT16 hostshort
+)
+{
+	return RtlUshortByteSwap(hostshort);
+}
+
+static
+inline
+UINT32
+ntohl(
+	_In_ UINT32 netlong
+)
+{
+	return RtlUlongByteSwap(netlong);
+}
+
+static
+inline
+UINT16
+ntohs(
+	_In_ UINT16 netshort
+)
+{
+	return RtlUshortByteSwap(netshort);
+}

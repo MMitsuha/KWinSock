@@ -1,10 +1,16 @@
 #include "WskSocket.h"
 #include "HTTP_Parser/http_parser.h"
+#include "MD5.h"
 #include <minwindef.h>
 #include <string.h>
+#define _NO_CRT_STDIO_INLINE
+#include <ntstrsafe.h>
 
 #define DebuggerPrint(...) DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, __VA_ARGS__);
 #define KWS_MEM_TAG ' SWK'
+
+#define MD5_SIZE		16
+#define MD5_STR_LEN		(MD5_SIZE * 2)
 
 //#define FILE_PATH L"\\??\\C:\\mitusha.jpg"
 //
@@ -177,6 +183,7 @@ DriverEntry(
 		return ntStatus;
 	}
 
+#if _CLIENT_MODE
 	//
 	// Client.
 	//
@@ -269,14 +276,14 @@ DriverEntry(
 								if (!NT_SUCCESS(ntStatus) || !Length)
 									break;
 
+								RecvBuffer[(sizeof(RecvBuffer) - sizeof(RecvBuffer[0])) / sizeof(RecvBuffer[0])] = 0;
+								RecvBuffer[Length] = 0;
+
 								if (http_parser_execute(&parser, &settings, RecvBuffer, Length) != Length)
 								{
 									ntStatus = STATUS_UNSUCCESSFUL;
 									break;
 								}
-
-								RecvBuffer[(sizeof(RecvBuffer) - sizeof(RecvBuffer[0])) / sizeof(RecvBuffer[0])] = 0;
-								RecvBuffer[Length] = 0;
 
 								/*PCHAR Ret = NULL;
 								if (!FoundHeader)
@@ -311,7 +318,7 @@ DriverEntry(
 			ZwClose(hFile);
 		}
 	}
-
+#else
 	//
 	// TCP server.
 	// Listen on port 9095, wait for some message,
@@ -323,35 +330,60 @@ DriverEntry(
 	// > Hello from WSK! [expected response]
 	//
 
-	/*{
-	  int result;
+	{
+		PKSOCKET Socket = NULL;
+		ntStatus = KsCreateListenSocket(&Socket, AF_INET, SOCK_STREAM, IPPROTO_TCP);
+		if (NT_SUCCESS(ntStatus))
+		{
+			SOCKADDR_IN SockAddr = { 0 };
+			SockAddr.sin_addr.s_addr = INADDR_ANY;
+			SockAddr.sin_family = AF_INET;
+			SockAddr.sin_port = htons(9095);
+			ntStatus = KsBind(Socket, (PSOCKADDR)&SockAddr);
+			if (NT_SUCCESS(ntStatus))
+			{
+				PKSOCKET ListenSocket = NULL;
+				ntStatus = KsAccept(Socket, &ListenSocket, NULL, (PSOCKADDR)&SockAddr);
+				if (NT_SUCCESS(ntStatus))
+				{
+					BYTE RecvBuffer[1025] = { 0 };
+					ULONG Length = 0;
+					while (TRUE)
+					{
+						Length = 0;
+						KsRecv(ListenSocket, RecvBuffer, sizeof(RecvBuffer) - sizeof(RecvBuffer[0]), 0, &Length);
+						if (!NT_SUCCESS(ntStatus) || !Length)
+							break;
 
-	  char send_buffer[] = "Hello from WSK!";
-	  char recv_buffer[1024] = { 0 };
+						RecvBuffer[(sizeof(RecvBuffer) - sizeof(RecvBuffer[0])) / sizeof(RecvBuffer[0])] = 0;
+						RecvBuffer[Length] = 0;
 
-	  int server_sockfd = socket_listen(AF_INET, SOCK_STREAM, 0);
+						DebuggerPrint("%s", RecvBuffer);
 
-	  struct sockaddr_in addr;
-	  addr.sin_family = AF_INET;
-	  addr.sin_addr.s_addr = INADDR_ANY;
-	  addr.sin_port = htons(9095);
+						if (!strncmp(RecvBuffer, "exit\n", Length))
+							break;
 
-	  result = bind(server_sockfd, (struct sockaddr*)&addr, sizeof(addr));
-	  result = listen(server_sockfd, 1);
+						BYTE MD5Str[MD5_STR_LEN] = { 0 };
+						BYTE MD5Value[MD5_SIZE] = { 0 };
+						MD5_CTX Context = { 0 };
+						MD5Init(&Context);
+						MD5Update(&Context, RecvBuffer, Length);
+						MD5Final(&Context, MD5Value);
 
-	  socklen_t addrlen = sizeof(addr);
-	  int client_sockfd = accept(server_sockfd, (struct sockaddr*)&addr, &addrlen);
+						for (BYTE i = 0; i < MD5_SIZE; i++)
+							RtlStringCbPrintfA(&MD5Str[i * 2], 2 + 1, "%02x", MD5Value[i]);
 
-	  result = recv(client_sockfd, recv_buffer, sizeof(recv_buffer) - 1, 0);
-	  recv_buffer[sizeof(recv_buffer) - 1] = '\0';
+						DebuggerPrint("%s\n", MD5Str);
+					}
 
-	  DebuggerPrint("TCP server:\n%s\n", recv_buffer);
+					KsCloseSocket(ListenSocket);
+				}
+			}
 
-	  result = send(client_sockfd, send_buffer, sizeof(send_buffer), 0);
-
-	  closesocket(client_sockfd);
-	  closesocket(server_sockfd);
-	}*/
+			KsCloseSocket(Socket);
+		}
+	}
+#endif
 
 	//
 	// Destroy KSOCKET.
