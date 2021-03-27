@@ -141,6 +141,8 @@ onHeaderValue(
 	return 0;
 }
 
+UINT64 TotalLength = 0;
+
 int
 onBody(
 #if USING_HTTP_PARSER
@@ -153,6 +155,7 @@ onBody(
 )
 {
 	//DebuggerPrint("[KS] %S:%.*s\n", __FUNCTIONW__, (ULONG)length, at);
+	TotalLength += length;
 
 	IO_STATUS_BLOCK IoStatus = { 0 };
 	NTSTATUS ntStatus = ZwWriteFile(((PUSER_DATA)pparser->data)->hFile, NULL, NULL, NULL, &IoStatus, (PVOID)at, length, NULL, NULL);
@@ -653,6 +656,7 @@ DriverEntry(
 						DebuggerPrint("[KS] Send:%u\n", Length);
 						if (NT_SUCCESS(ntStatus))
 						{
+							DebuggerPrint("-----START-----\n");
 							/*BOOLEAN FoundHeader = FALSE;*/
 
 							while (TRUE)
@@ -701,6 +705,8 @@ DriverEntry(
 										break;
 								}*/
 							}
+
+							DebuggerPrint("-----END-----\n");
 						}
 					}
 
