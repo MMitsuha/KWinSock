@@ -18,7 +18,7 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  */
-#include "http_parser.h"
+#include "../include/http_parser.h"
 #include <stddef.h>
 #include <ctype.h>
 #include <string.h>

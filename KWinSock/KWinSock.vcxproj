@@ -144,13 +144,17 @@
     <FilesToPackage Include="$(TargetPath)" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="HTTP_Parser\http_parser.c" />
+    <ClCompile Include="HTTP_Parser\src\http_parser.c" />
+    <ClCompile Include="llhttp\src\api.c" />
+    <ClCompile Include="llhttp\src\http.c" />
+    <ClCompile Include="llhttp\src\llhttp.c" />
     <ClCompile Include="Main.c" />
     <ClCompile Include="MD5.c" />
     <ClCompile Include="WskSocket.c" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="HTTP_Parser\http_parser.h" />
+    <ClInclude Include="HTTP_Parser\include\http_parser.h" />
+    <ClInclude Include="llhttp\include\llhttp.h" />
     <ClInclude Include="MD5.h" />
     <ClInclude Include="WskSocket.h" />
   </ItemGroup>

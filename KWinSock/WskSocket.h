@@ -104,7 +104,7 @@ KsSendRecvTcp(
 	_In_ PVOID Buffer,
 	_In_ ULONG Length,
 	_In_ ULONG Flags,
-	_Out_ PULONG LengthReturned,
+	_Out_opt_ PULONG LengthReturned,
 	_In_ BOOLEAN Send
 );
 
@@ -126,7 +126,7 @@ KsSend(
 	_In_ PVOID Buffer,
 	_In_ ULONG Length,
 	_In_ ULONG Flags,
-	_Out_ PULONG LengthReturned
+	_Out_opt_ PULONG LengthReturned
 );
 
 NTSTATUS
@@ -136,7 +136,7 @@ KsRecv(
 	_In_ PVOID Buffer,
 	_In_ ULONG Length,
 	_In_ ULONG Flags,
-	_Out_ PULONG LengthReturned
+	_Out_opt_ PULONG LengthReturned
 );
 
 NTSTATUS

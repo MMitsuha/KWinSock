@@ -648,7 +648,7 @@ KsSendRecvTcp(
 	_In_ PVOID Buffer,
 	_In_ ULONG Length,
 	_In_ ULONG Flags,
-	_Out_ PULONG LengthReturned,
+	_Out_opt_ PULONG LengthReturned,
 	_In_ BOOLEAN Send
 )
 {
@@ -718,7 +718,8 @@ KsSendRecvTcp(
 
 	/*if (NT_SUCCESS(Status))
 	{*/
-	*LengthReturned = (ULONG)Socket->AsyncContext.Irp->IoStatus.Information;
+	if (LengthReturned)
+		*LengthReturned = (ULONG)Socket->AsyncContext.Irp->IoStatus.Information;
 	/*}*/
 
 	//

@@ -13,8 +13,23 @@
       <UniqueIdentifier>{8E41214B-6785-4CFE-B992-037D68949A14}</UniqueIdentifier>
       <Extensions>inf;inv;inx;mof;mc;</Extensions>
     </Filter>
-    <Filter Include="HTTP_Praser">
-      <UniqueIdentifier>{812f77f5-929b-4207-8ea5-cce015be0e35}</UniqueIdentifier>
+    <Filter Include="llhttp">
+      <UniqueIdentifier>{02d329ad-54d7-4337-a65b-ddbc3285c4df}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="llhttp\include">
+      <UniqueIdentifier>{205a8284-8ddd-4b80-a402-8da2ca591604}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="llhttp\src">
+      <UniqueIdentifier>{613c56d9-ec3c-4c74-812c-c95dccfe0928}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="HTTP_Parser">
+      <UniqueIdentifier>{4dd54a99-01eb-4497-a131-07e3b879958d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="HTTP_Parser\include">
+      <UniqueIdentifier>{628cda60-864d-4e2a-8780-03d0524cf02f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="HTTP_Parser\src">
+      <UniqueIdentifier>{d84f330d-bc73-4716-8782-774fee98c5ea}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -24,22 +39,34 @@
     <ClCompile Include="WskSocket.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="HTTP_Parser\http_parser.c">
-      <Filter>HTTP_Praser</Filter>
-    </ClCompile>
     <ClCompile Include="MD5.c">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="llhttp\src\api.c">
+      <Filter>llhttp\src</Filter>
+    </ClCompile>
+    <ClCompile Include="llhttp\src\http.c">
+      <Filter>llhttp\src</Filter>
+    </ClCompile>
+    <ClCompile Include="llhttp\src\llhttp.c">
+      <Filter>llhttp\src</Filter>
+    </ClCompile>
+    <ClCompile Include="HTTP_Parser\src\http_parser.c">
+      <Filter>HTTP_Parser\src</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="WskSocket.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="HTTP_Parser\http_parser.h">
-      <Filter>HTTP_Praser</Filter>
-    </ClInclude>
     <ClInclude Include="MD5.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="llhttp\include\llhttp.h">
+      <Filter>llhttp\include</Filter>
+    </ClInclude>
+    <ClInclude Include="HTTP_Parser\include\http_parser.h">
+      <Filter>HTTP_Parser\include</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
