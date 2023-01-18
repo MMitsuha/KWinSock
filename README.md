@@ -42,7 +42,6 @@ Then you should connect to host with `KsConnect`
 ```
 ntStatus = KsConnect(Socket, Result->ai_addr);
 ```
-```
 
 > https://github.com/caizhe666/KWinSock/blob/master/KWinSock/Main.c#L651
 
